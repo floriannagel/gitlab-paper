@@ -1,71 +1,15 @@
 # Gitlab CI + CodeIgniter Unit Testing
 
-
 ## Gitlab Runner
-Der Runner Dienst führt alle vergebenen 
+Gitlab kommt mit einem eigenen Continuous Integration System. Um Software aller Art zu testen und auszuliefern bietet es viele Möglichkeiten der Automatisierung.
 
-### Vorbereitung
-Der `before_script` Tag dient als Vorbereitung. Hier sollten Abhängigkeiten installiert werden. Siehe nachfolgendes Beispiel.
-
-### Jobs
-Der Gitlab CI Dienst basiert auf einzelnen `jobs` welche durch Docker in der CI betrieben werden. Diese können auch lokal ausgeführt werden.
-Es können unendlich viele `jobs` konfiguriert werden. 
-
-Jeder `job` kann frei konfiguriert werden. Somit ist es möglich, bei Web-Anwendungen, einzelne Umgebungen zu testen. Zum Beispiel die Application auf PHP5.6 und PHP7.1.
-
-#### Beispiel
-```
-# Run our tests for php7.1
-phpunit:php7.1:
-  stage: test
-  script:
-    - cd application/tests/
-    - phpunit --coverage-text --colors=never 
-```
-
-### Services
-Jedem `job` kann einen oder mehrere `services` hinzugefügt werden, dabei  können entweder Images von hub.docker.com genutzt werden:
-`<docker-image>:<tag>` 
-
-oder mittels `docker-compose` Befehle auch eigene Umgebungen eingerichtet werden.
- [Using Docker Images - GitLab Documentation](https://docs.gitlab.com/ce/ci/docker/using_docker_images.html#how-to-use-other-images-as-services) 
-
-#### Beispiel
-```
-services:
-  - postgres:9.3
-	- mysql:5.6
-```
-
-### Stages
-Es können mehrere Stages konfiguriert werden. Hierbei können die Stage-Namen frei gewählt werden. Die Reihenfolge der Stages ist entscheidend. Wenn eine Stage fehlschlägt, werden alle anderen danach abgebrochen. Im nachfolgenden Beispiel, würde ein Fehler in der `build`-Stage, die weiteren Stages `test` und `deploy` abbrechen. 
-
-### Variables
-Sie dienen dazu, für einzelne Services oder aufrufe vordefinierte Werte bereitzustellen. So ist die Variable `MYSQL_DATABASE` zuständig für die Vergabe der Datenbank auf dem Service MySQL.
-
-[MySQL - GitLab Dokumentation](https://docs.gitlab.com/ce/ci/services/mysql.html)
-[MySQL Docker Hub Dokumentation](https://hub.docker.com/r/_/mysql/)
-
-
-### Caching
-Einzelne Ordner können zum Cache hinzugefügt werden um die Build-Zeit in Zukunft zu minimieren. 
-
-### Fehler erlauben
-Mit `allow_failure` kann einem `job` das fehlschlagen erlaubt werden. Dieser bricht dann nicht weitere jobs ab. 
-
-### Branching
-Mit `only` können jobs auf bestimmte Branches beschränkt werden. Zum Beispiel das deployen auf Produktiv-Server wird auf den master branch beschränkt.
-
-### Weitere Dokumentation
-[GitLab Documentation - Gitlab CI Yaml](https://docs.gitlab.com/ce/ci/yaml/README.html)
-
-### Beispiel Konfiguration
+### Konfiguration
 ```
 # Select image from https://hub.docker.com/_/php/
 image: php:7.1.1
 
 stages:
-	- build
+  - build
   - test
   - deploy
 
@@ -124,6 +68,8 @@ phpunit:php7.1:
   script:
     - cd application/tests/
     - phpunit --coverage-text --colors=never 
+	services:
+  	  - mysql:latest
 
 # Building the projekt
 building:
@@ -134,11 +80,72 @@ building:
 # Deploy App to the server
 deploying:
   stage: deploy
-  script:
-
   only:
     - master
 ```
+
+Die gezeigte Konfiguration erzeugt zwei `jobs`. Einmal auf Basis von PHP5.6 und einmal auf PHP7.1 mit MySQL. 
+
+### Basis-Image
+Das Basis-Image ist `image: php:7.1.1`. Wenn `jobs` andere Images nutzen, müssen diese jeweils in den `jobs` definiert werden. Wenn kein Image im `job` angegeben wird, wird immer das Basis-Image genutzt.
+
+### Vorbereitung
+Der `before_script` dient als Vorbereitung. Hier sollten Abhängigkeiten installiert werden. 
+
+```
+before_script:
+  - apt-get update -yqq
+  - apt-get install git libcurl4-gnutls-dev libicu-dev
+```
+
+### Jobs
+Der Gitlab Runner Dienst basiert auf einzelnen `jobs` welche durch Docker betrieben werden. Diese können auch lokal ausgeführt werden.
+Es können unendlich viele `jobs` konfiguriert werden.
+
+Jeder `job` kann frei konfiguriert werden. Somit ist es möglich, bei Web-Anwendungen, einzelne Umgebungen zu testen. Zum Beispiel die Application auf PHP5.6 und PHP7.1 oder ähnliches.
+
+```
+# Run our tests for php7.1
+phpunit:php7.1:
+  stage: test
+  script:
+    - cd application/tests/
+    - phpunit --coverage-text --colors=never 
+```
+
+### Services
+Jedem `job` kann einen oder mehrere `services` hinzugefügt werden, dabei können entweder Images von hub.docker.com genutzt werden:
+`<docker-image>:<tag>` 
+
+oder mittels `docker-compose` Befehle, auch eigene Umgebungen eingerichtet werden.
+[Using Docker Images - GitLab Documentation](https://docs.gitlab.com/ce/ci/docker/using_docker_images.html#how-to-use-other-images-as-services) 
+
+```
+services:
+  - postgres:9.3
+  - mysql:5.6
+```
+
+### Stages
+Es können mehrere Stages konfiguriert werden. Hierbei können die Stage-Namen frei gewählt werden. Die Reihenfolge der Stages ist entscheidend. Wenn eine Stage fehlschlägt, werden alle anderen danach abgebrochen. Im nachfolgenden Beispiel, würde ein Fehler in der `build`-Stage, die weiteren Stages `test` und `deploy` abbrechen. 
+
+### Variables
+Sie dienen dazu, für einzelne Services oder Aufrufe vordefinierte Werte bereitzustellen. So ist die Variable `MYSQL_DATABASE` zuständig für die Vergabe der Datenbank auf dem Service MySQL.
+
+[MySQL - GitLab Dokumentation](https://docs.gitlab.com/ce/ci/services/mysql.html)
+[MySQL Docker Hub Dokumentation](https://hub.docker.com/r/_/mysql/)
+
+### Caching
+Einzelne Ordner können zum Cache hinzugefügt werden um die Build-Zeit in Zukunft zu minimieren. 
+
+### Fehler erlauben
+Mit `allow_failure` kann einem `job` das fehlschlagen erlaubt werden. Dieser bricht dann nicht weitere jobs ab. 
+
+### Branching
+Mit `only` können jobs auf bestimmte Branches beschränkt werden. Zum Beispiel das deployen auf Produktiv-Server wird auf den master branch beschränkt.
+
+### Weitere Dokumentation
+[GitLab Documentation - Gitlab CI Yaml](https://docs.gitlab.com/ce/ci/yaml/README.html)
 
 
 ## CodeIgniter Testing
@@ -160,16 +167,45 @@ Die Controller können über `$this->request(‘GET’, ‘welcome/index’);` a
 In dem unten aufgezeigten Beispiel, wird nach dem richtigen html Title-Tag gesucht. Um HTML UI zu testen, sollte jedoch auf andere Lösungen zurückgegriffen werden. Im Vordergrund beim testen des Controllers sollte die Datenverarbeitung stehen. Über POST Daten zum Controller zu senden und hinterher zu prüfen, ob die richtigen oder überhaupt Daten in die Datenbank geschrieben wurden.
 
 Eine vollständige Dokumentation über alle Möglichkeiten beim Testen, findet sich hier: [ci-phpunit-test/HowToWriteTests.md at master · kenjis/ci-phpunit-test · GitHub](https://github.com/kenjis/ci-phpunit-test/blob/master/docs/HowToWriteTests.md)
+[CI-PHPUnit Function Reference](https://github.com/kenjis/ci-phpunit-test/blob/master/docs/FunctionAndClassReference.md#testcaserequestmethod-argv-params--)
 
 #### Beispiel
 ```php
-class Welcome_test extends TestCase
-{
-    public function test_index()
-    {
+class Welcome_test extends TestCase {
+    
+    public function setUp() {
+
+    }
+
+    public function test_index() {
+        
         $output = $this->request('GET', 'welcome/index');
+        
         $this->assertContains(
             '<title>Welcome to CodeIgniter</title>', $output
+        );
+    }
+}
+```
+
+#### Beispiel 
+```php
+class Userinfos_test extends TestCase {
+    
+    public function setUp() {
+
+    }
+
+    public function test_post() {
+
+        //Make Post request to controller
+        $output = $this->request(
+          'POST', 'form/index',
+          ['name' => 'John Smith', 'email' => 'john@example.com']
+        );
+
+        $this->assertContains(
+            '<title>Beispielseite - Registrierung erfolgreich</title>', $output
         );
     }
 }
@@ -179,40 +215,40 @@ class Welcome_test extends TestCase
 ### Model Unit Test
 Um Models zu testen, müssen die Unit-Tests im Ordner `application/tests/models` abgelegt werden.
 
-Beim Model steht die Datenbank im Vordergrund. 
+Beim Model steht die Datenbank im Vordergrund. Hier sollte über Anfragen an das Model die Datenbank verändert werden.
 
+Für bestimmte Testfälle, kann in der Konfiguration die DB initialisiert werden, z.b über `mysql -u root laravel < "sql/laravel.sql`.
 
 #### Beispiel
 ```php
-class Inventory_model_test extends TestCase
-{
-    public function setUp()
-    {
+class Inventory_model_test extends TestCase {
+    
+    public function setUp() {
+        
         $this->obj = $this->newModel('Inventory_model');
     }
 
-    public function test_get_category_list()
-    {
+    public function test_get_category_list() {
+        
         $expected = [
             1 => 'Book',
             2 => 'CD',
             3 => 'DVD',
         ];
+        
         $list = $this->obj->get_category_list();
+        
         foreach ($list as $category) {
             $this->assertEquals($expected[$category->id], $category->name);
         }
     }
 
-    public function test_get_category_name()
-    {
+    public function test_get_category_name() {
+        
         $actual = $this->obj->get_category_name(1);
+        
         $expected = 'Book';
         $this->assertEquals($expected, $actual);
     }
 }
 ```
-
-
-
-#Paper
