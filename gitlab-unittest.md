@@ -217,7 +217,7 @@ Um Models zu testen, müssen die Unit-Tests im Ordner `application/tests/models`
 
 Beim Model steht die Datenbank im Vordergrund. Hier sollte über Anfragen an das Model die Datenbank verändert werden.
 
-Für bestimmte Testfälle, kann in der Konfiguration die DB initialisiert werden, z.b über `mysql -u root laravel < "sql/laravel.sql`.
+Für bestimmte Testfälle, kann in der Konfiguration die DB initialisiert werden, z.b über `mysql -u root codeigniter_db < "sql/code_ign.sql`.
 
 #### Beispiel
 ```php
