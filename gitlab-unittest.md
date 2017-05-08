@@ -26,7 +26,7 @@ variables:
 before_script:
   # Update packages and install composer and PHP dependencies.
   - apt-get update -yqq
-  - apt-get install git libcurl4-gnutls-dev libicu-dev libmcrypt-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libpq-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev wget -yqq
+  - apt-get install git libcurl4-gnutls-dev libicu-dev libmcrypt-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libpq-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev wget build-essential nodejs-legacy npm -yqq
 
   # Compile PHP, include these extensions.
   - docker-php-ext-install mbstring mcrypt pdo_mysql curl json intl gd xml zip bz2 opcache
@@ -47,12 +47,17 @@ before_script:
   - php composer.phar require kenjis/ci-phpunit-test --dev
   - php vendor/kenjis/ci-phpunit-test/install.php
 
+  # Install npm dependecies
+  - npm install npm@latest -g
+  - npm install --global gulp-cli
+  - npm install
+
 # Run our tests for php5.6
 phpunit:php5.6:
   stage: test
   image: php:5.6
-	services:
-  	  - mysql:latest
+  services:
+    - mysql:latest
   script:
     - wget https://phar.phpunit.de/phpunit-5.7.phar
     - mv phpunit-5.7.phar phpunit.phar
@@ -68,20 +73,14 @@ phpunit:php7.1:
   script:
     - cd application/tests/
     - phpunit --coverage-text --colors=never 
-	services:
-  	  - mysql:latest
+  services:
+    - mysql:latest
 
 # Building the projekt
 building:
   stage: build
   script:
     - gulp
-
-# Deploy App to the server
-deploying:
-  stage: deploy
-  only:
-    - master
 ```
 
 Die gezeigte Konfiguration erzeugt zwei `jobs`. Einmal auf Basis von PHP5.6 und einmal auf PHP7.1 mit MySQL. 
@@ -210,7 +209,6 @@ class Userinfos_test extends TestCase {
     }
 }
 ```
-
 
 ### Model Unit Test
 Um Models zu testen, müssen die Unit-Tests im Ordner `application/tests/models` abgelegt werden.
