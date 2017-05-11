@@ -81,6 +81,22 @@ building:
   stage: build
   script:
     - gulp
+
+#Deploying
+deploy_staging:
+  stage: deploy
+  script:
+    - echo "Deploy to staging server"
+    - echo "$SSH_DEPLOY_KEY" > id_rsa
+    - chmod 700 id_rsa
+    - mkdir "$HOME/.ssh"
+    - echo "$SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+    - rsync -hrvz --delete --exclude=_ -e 'ssh -i id_rsa' . deploy_bot@$SSH_HOST_KEY:/var/www/html/
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - master
 ```
 
 Die gezeigte Konfiguration erzeugt zwei `jobs`. Einmal auf Basis von PHP5.6 und einmal auf PHP7.1 mit MySQL. 
@@ -142,6 +158,36 @@ Mit `allow_failure` kann einem `job` das fehlschlagen erlaubt werden. Dieser bri
 
 ### Branching
 Mit `only` können jobs auf bestimmte Branches beschränkt werden. Zum Beispiel das deployen auf Produktiv-Server wird auf den master branch beschränkt.
+
+### Environments
+Das Deployment ist genauso flexibel gehalten, wie die `jobs`. Sprich es können egal wie viele konfiguriert werden. Es gibt mehrere Strategien, wie das deployment stattfindet. Bei Cloudbasierten Diensten kann dies über die jeweilige CLI abgedeckt werden:
+```
+- pip install awscli
+- aws s3 cp ./ s3://yourbucket/ --recursive --exclude "*" --include "*.html"
+```
+Genauso können im Deployment Docker Images erstellt werden und über eine Docker-Registry Service wie Docker hub verteilt werden:
+```
+- docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $REGISTRY
+- docker build -t $REGISTRY/<PROJECT-GROUP>/<PROJECT-NAME> .
+- docker push $REGISTRY/<PROJECT-GROUP>/<PROJECT-NAME>
+```
+Hilfreich sind auch Tools wie [Stackahoy](https://stackahoy.io)
+
+Der manuelle Weg kann über Rsync geschaffen werden. Dieses Tool verfügt über einen inkrementellen Upload um Zeit zu sparen.
+Um Rsync einzusetzen, muss der Server über SSH erreichbar sein. Danach kann die Umgebung aktualisiert werden.
+```
+- echo "$SSH_DEPLOY_KEY" > id_rsa
+- chmod 700 id_rsa
+- mkdir "$HOME/.ssh"
+- echo "$SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+- rsync -hrvz --delete --exclude=_ -e 'ssh -i id_rsa' . deploy_bot@$SSH_HOST_KEY:/var/www/html/
+```
+Über die `Environments` besteht die Möglichkeit verschiedene Umgebungen aufzubauen. Zum Beispiel staging, production etc.
+In dem oberen Beispiel, wird eine staging Umgebung erstellt.
+
+[Beispiel Deployment mit rync](https://tonyblyler.com/post/CI-Rsync-Deployment/)
+
+[Offizielle Rsync Dokumentation](http://rsync.samba.org)
 
 ### Weitere Dokumentation
 [GitLab Documentation - Gitlab CI Yaml](https://docs.gitlab.com/ce/ci/yaml/README.html)
