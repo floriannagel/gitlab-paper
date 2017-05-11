@@ -86,12 +86,19 @@ building:
 deploy_staging:
   stage: deploy
   script:
-    - echo "Deploy to staging server"
-    - echo "$SSH_DEPLOY_KEY" > id_rsa
-    - chmod 700 id_rsa
-    - mkdir "$HOME/.ssh"
-    - echo "$SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
-    - rsync -hrvz --delete --exclude=_ -e 'ssh -i id_rsa' . deploy_bot@$SSH_HOST_KEY:/var/www/html/
+    # Install ssh-agent and rsync if not already installed, it is required by Docker.
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - 'which rsync || (apt-get install rsync -y)'
+
+    # Run ssh-agent (inside the build environment)
+    - eval $(ssh-agent -s)
+
+    # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+    - ssh-add <(echo "$SSH_DEPLOY_KEY")
+
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' 
+    - rsync -avz --exclude=.git --exclude=.gitlab-ci.yml . deploy_bot@$SSH_HOST_KEY:/var/www/html/
   environment:
     name: staging
     url: https://staging.example.com
