@@ -66,6 +66,8 @@ phpunit:php5.6:
 
     - cd application/tests/
     - phpunit --coverage-text --colors=never
+  except:
+    - master
 
 # Run our tests for php7.1
 phpunit:php7.1:
@@ -75,7 +77,7 @@ phpunit:php7.1:
     - phpunit --coverage-text --colors=never 
   services:
     - mysql:latest
-    except:
+  except:
     - master
 
 # Building the projekt
