@@ -75,6 +75,8 @@ phpunit:php7.1:
     - phpunit --coverage-text --colors=never 
   services:
     - mysql:latest
+    except:
+    - master
 
 # Building the projekt
 building:
@@ -164,7 +166,8 @@ Einzelne Ordner können zum Cache hinzugefügt werden um die Build-Zeit in Zukun
 Mit `allow_failure` kann einem `job` das fehlschlagen erlaubt werden. Dieser bricht dann nicht weitere jobs ab. 
 
 ### Branching
-Mit `only` können jobs auf bestimmte Branches beschränkt werden. Zum Beispiel das deployen auf Produktiv-Server wird auf den master branch beschränkt.
+Mit `only` können `jobs `auf bestimmte Branches beschränkt werden. Zum Beispiel das deployen auf Produktiv-Server wird auf den master branch beschränkt.
+Mit `except` können `jobs` können bestimmte Branches ausgeschlossen werden.
 
 ### Environments
 Das Deployment ist genauso flexibel gehalten, wie die `jobs`. Sprich es können egal wie viele konfiguriert werden. Es gibt mehrere Strategien, wie das deployment stattfindet. Bei Cloudbasierten Diensten kann dies über die jeweilige CLI abgedeckt werden:
