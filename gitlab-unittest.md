@@ -82,7 +82,7 @@ building:
   script:
     - gulp
 
-#Deploying
+# Deployment
 deploy_staging:
   stage: deploy
   script:
@@ -165,13 +165,17 @@ Das Deployment ist genauso flexibel gehalten, wie die `jobs`. Sprich es können 
 - pip install awscli
 - aws s3 cp ./ s3://yourbucket/ --recursive --exclude "*" --include "*.html"
 ```
-Genauso können im Deployment Docker Images erstellt werden und über eine Docker-Registry Service wie Docker hub verteilt werden:
+Genauso können im Deployment Docker Images erstellt werden und über eine Docker-Registry Service wie Docker hub oder Gitlab selbst verteilt werden:
 ```
 - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $REGISTRY
 - docker build -t $REGISTRY/<PROJECT-GROUP>/<PROJECT-NAME> .
 - docker push $REGISTRY/<PROJECT-GROUP>/<PROJECT-NAME>
 ```
 Hilfreich sind auch Tools wie [Stackahoy](https://stackahoy.io)
+```
+- npm install -g stackahoy
+- stackahoy deploy -t $STACKAHOY_TOKEN -b production -r $REPO_ID
+```
 
 Der manuelle Weg kann über Rsync geschaffen werden. Dieses Tool verfügt über einen inkrementellen Upload um Zeit zu sparen.
 Um Rsync einzusetzen, muss der Server über SSH erreichbar sein. Danach kann die Umgebung aktualisiert werden.
